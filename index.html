@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue 待辦事項應用</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .todo-input {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .todo-input input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .todo-input input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .add-btn {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .add-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .todo-list {
+            padding: 0 30px 30px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .todo-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .todo-item.completed {
+            background: #e8f5e8;
+            border-color: #28a745;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .todo-checkbox {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: #28a745;
+        }
+
+        .todo-text {
+            flex: 1;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+
+        .stats {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .filter-tabs {
+            display: flex;
+            padding: 20px 30px 0;
+            gap: 10px;
+        }
+
+        .filter-tab {
+            padding: 10px 20px;
+            border: 2px solid #e9ecef;
+            background: white;
+            color: #6c757d;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-tab.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <!-- 標題區域 -->
+            <div class="header">
+                <h1><i class="fas fa-tasks"></i> 我的待辦清單</h1>
+                <p>讓生活更有條理</p>
+            </div>
+
+            <!-- 輸入區域 -->
+            <div class="todo-input">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        v-model="newTodo" 
+                        @keyup.enter="addTodo"
+                        placeholder="輸入新的待辦事項..."
+                        maxlength="100"
+                    >
+                    <button 
+                        class="add-btn" 
+                        @click="addTodo"
+                        :disabled="!newTodo.trim()"
+                    >
+                        <i class="fas fa-plus"></i> 添加
+                    </button>
+                </div>
+            </div>
+
+            <!-- 篩選標籤 -->
+            <div class="filter-tabs">
+                <button 
+                    class="filter-tab"
+                    :class="{ active: filter === 'all' }"
+                    @click="filter = 'all'"
+                >
+                    全部 ({{ todos.length }})
+                </button>
+                <button 
+                    class="filter-tab"
+                    :class="{ active: filter === 'active' }"
+                    @click="filter = 'active'"
+                >
+                    待完成 ({{ activeTodos.length }})
+                </button>
+                <button 
+                    class="filter-tab"
+                    :class="{ active: filter === 'completed' }"
+                    @click="filter = 'completed'"
+                >
+                    已完成 ({{ completedTodos.length }})
+                </button>
+            </div>
+
+            <!-- 待辦事項列表 -->
+            <div class="todo-list">
+                <div v-if="filteredTodos.length === 0" class="empty-state">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>{{ emptyStateMessage }}</h3>
+                    <p>{{ emptyStateSubMessage }}</p>
+                </div>
+                
+                <div 
+                    v-for="todo in filteredTodos" 
+                    :key="todo.id"
+                    class="todo-item"
+                    :class="{ completed: todo.completed }"
+                >
+                    <input 
+                        type="checkbox" 
+                        class="todo-checkbox"
+                        v-model="todo.completed"
+                    >
+                    <span class="todo-text">{{ todo.text }}</span>
+                    <button 
+                        class="delete-btn" 
+                        @click="deleteTodo(todo.id)"
+                        title="刪除"
+                    >
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 統計信息 -->
+            <div class="stats" v-if="todos.length > 0">
+                <div class="stat-item">
+                    <div class="stat-number">{{ todos.length }}</div>
+                    <div class="stat-label">總計</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ activeTodos.length }}</div>
+                    <div class="stat-label">待完成</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ completedTodos.length }}</div>
+                    <div class="stat-label">已完成</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ completionPercentage }}%</div>
+                    <div class="stat-label">完成率</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    newTodo: '',
+                    filter: 'all',
+                    todos: [
+                        { id: 1, text: '學習 Vue.js 基礎知識', completed: true },
+                        { id: 2, text: '完成項目文檔', completed: false },
+                        { id: 3, text: '準備明天的會議', completed: false }
+                    ]
+                }
+            },
+            computed: {
+                activeTodos() {
+                    return this.todos.filter(todo => !todo.completed);
+                },
+                completedTodos() {
+                    return this.todos.filter(todo => todo.completed);
+                },
+                filteredTodos() {
+                    switch(this.filter) {
+                        case 'active':
+                            return this.activeTodos;
+                        case 'completed':
+                            return this.completedTodos;
+                        default:
+                            return this.todos;
+                    }
+                },
+                completionPercentage() {
+                    if (this.todos.length === 0) return 0;
+                    return Math.round((this.completedTodos.length / this.todos.length) * 100);
+                },
+                emptyStateMessage() {
+                    switch(this.filter) {
+                        case 'active':
+                            return '太棒了！沒有待完成的事項';
+                        case 'completed':
+                            return '還沒有完成任何事項';
+                        default:
+                            return '還沒有任何待辦事項';
+                    }
+                },
+                emptyStateSubMessage() {
+                    switch(this.filter) {
+                        case 'active':
+                            return '所有事項都已完成！';
+                        case 'completed':
+                            return '完成一些事項來查看進度';
+                        default:
+                            return '添加一個新的待辦事項開始吧！';
+                    }
+                }
+            },
+            methods: {
+                addTodo() {
+                    const text = this.newTodo.trim();
+                    if (text) {
+                        const newTodo = {
+                            id: Date.now(),
+                            text: text,
+                            completed: false
+                        };
+                        this.todos.push(newTodo);
+                        this.newTodo = '';
+                    }
+                },
+                deleteTodo(id) {
+                    this.todos = this.todos.filter(todo => todo.id !== id);
+                },
+                toggleAll() {
+                    const allCompleted = this.todos.every(todo => todo.completed);
+                    this.todos.forEach(todo => {
+                        todo.completed = !allCompleted;
+                    });
+                }
+            },
+            mounted() {
+                // 從 localStorage 載入數據
+                const savedTodos = localStorage.getItem('vue-todos');
+                if (savedTodos) {
+                    this.todos = JSON.parse(savedTodos);
+                }
+            },
+            watch: {
+                todos: {
+                    handler(newTodos) {
+                        // 保存到 localStorage
+                        localStorage.setItem('vue-todos', JSON.stringify(newTodos));
+                    },
+                    deep: true
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
